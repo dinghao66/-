@@ -1,0 +1,1610 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FOODEXPLORER · 菜市场大字报</title>
+<style>
+  :root{
+    --paper:#F2E9D8;
+    --paper-2:#FFFCF3;
+    --ink:#17130F;
+    --red:#D8321F;
+    --red-deep:#A81F12;
+    --yellow:#FFCF1F;
+    --green:#135E45;
+    --muted:#6B5F52;
+    --font-display:"Arial Black","Helvetica Neue","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+    --font-body:"PingFang SC","Microsoft YaHei","Hiragino Sans GB","Noto Sans SC",system-ui,sans-serif;
+    --font-hand:"Kaiti SC","KaiTi","STKaiti","楷体",serif;
+  }
+
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--font-body);
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  body::after{
+    content:"";
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    z-index:9999;
+    opacity:.055;
+    mix-blend-mode:multiply;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  img{max-width:100%;display:block}
+  a{color:inherit;text-decoration:none}
+  button{font-family:inherit}
+
+  .wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+
+  /* ---------- 顶栏 ---------- */
+  .topbar{
+    position:sticky;top:0;z-index:60;
+    background:var(--paper);
+    border-bottom:3px solid var(--ink);
+  }
+  .topbar .wrap{
+    display:flex;align-items:center;justify-content:space-between;gap:20px;
+    height:76px;
+  }
+  .logo{display:flex;align-items:baseline;gap:10px;white-space:nowrap}
+  .logo b{
+    font-family:var(--font-display);font-weight:900;
+    font-size:24px;letter-spacing:-.02em;
+  }
+  .logo b span{color:var(--red)}
+  .logo i{
+    font-style:normal;font-size:11px;font-weight:800;letter-spacing:.16em;
+    background:var(--ink);color:var(--paper);padding:4px 7px;
+    transform:translateY(-2px);
+  }
+  .nav{display:flex;gap:28px;font-weight:800;font-size:15px}
+  .nav a{position:relative;padding:6px 0}
+  .nav a::after{
+    content:"";position:absolute;left:0;bottom:0;width:0;height:4px;background:var(--red);
+    transition:width .2s;
+  }
+  .nav a:hover::after{width:100%}
+  .market-state{
+    display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;
+    letter-spacing:.08em;color:var(--muted);white-space:nowrap;
+  }
+  .dot{width:8px;height:8px;background:var(--red);border-radius:50%;animation:blink 1.6s infinite}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+
+  /* ---------- 滚动吆喝 ---------- */
+  .ticker{
+    background:var(--red);color:var(--yellow);
+    border-bottom:3px solid var(--ink);
+    overflow:hidden;
+    padding:9px 0;
+  }
+  .ticker-track{
+    display:flex;gap:0;white-space:nowrap;
+    animation:marquee 26s linear infinite;
+    font-weight:900;font-size:13px;letter-spacing:.22em;
+  }
+  .ticker-track span{padding-right:48px}
+  @keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+  /* ---------- Hero ---------- */
+  .hero{padding:76px 0 54px;position:relative}
+  .hero-grid{
+    display:grid;grid-template-columns:1.18fr .82fr;gap:56px;align-items:center;
+  }
+  .eyebrow{
+    display:inline-flex;align-items:center;gap:10px;
+    font-size:12px;font-weight:900;letter-spacing:.2em;color:var(--red-deep);
+    margin-bottom:22px;
+  }
+  .eyebrow::before{content:"";width:34px;height:3px;background:var(--red)}
+  h1{
+    font-family:var(--font-display);font-weight:900;
+    font-size:clamp(58px,9.2vw,124px);
+    line-height:.92;letter-spacing:-.045em;margin:0 0 26px;
+  }
+  h1 .line{display:block}
+  h1 .hl{
+    display:inline-block;background:var(--yellow);
+    padding:0 .1em .04em;margin:.04em 0 .02em;
+    transform:rotate(-1.4deg);
+    box-shadow:9px 9px 0 var(--ink);
+  }
+  h1 .q{color:var(--red)}
+  .hero-sub{
+    font-size:17px;line-height:1.85;color:#4C4237;max-width:36ch;margin:0 0 34px;
+  }
+  .actions{display:flex;flex-wrap:wrap;gap:14px;align-items:center}
+  .btn{
+    display:inline-flex;align-items:center;gap:10px;
+    font-weight:900;font-size:16px;padding:15px 28px;
+    border:3px solid var(--ink);background:var(--paper-2);color:var(--ink);
+    box-shadow:6px 6px 0 var(--ink);cursor:pointer;
+    transition:transform .14s,box-shadow .14s,background .14s;
+  }
+  .btn:hover{transform:translate(-2px,-2px);box-shadow:8px 8px 0 var(--ink)}
+  .btn:active{transform:translate(4px,4px);box-shadow:2px 2px 0 var(--ink)}
+  .btn.primary{background:var(--red);color:#fff}
+  .btn.primary:hover{background:var(--red-deep)}
+
+  /* 摊主名片 */
+  .stall-card-hero{
+    position:relative;
+    background:var(--paper-2);
+    border:3px solid var(--ink);
+    box-shadow:10px 10px 0 var(--red);
+    padding:30px 26px 26px;
+    transform:rotate(1.4deg);
+  }
+  .tape{
+    position:absolute;top:-15px;left:34px;
+    width:96px;height:28px;
+    background:rgba(255,207,31,.85);
+    transform:rotate(-4deg);
+    box-shadow:0 1px 0 rgba(23,19,15,.12);
+  }
+  .card-head{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+  .avatar-lg{
+    width:64px;height:64px;border-radius:50%;
+    border:3px solid var(--ink);background:var(--yellow);
+    display:grid;place-items:center;font-size:30px;flex:none;
+    box-shadow:4px 4px 0 var(--ink);
+  }
+  .card-name{font-family:var(--font-display);font-weight:900;font-size:23px;letter-spacing:-.02em}
+  .card-role{font-size:12px;font-weight:800;letter-spacing:.1em;color:var(--red)}
+  .card-quote{
+    font-family:var(--font-hand);font-size:23px;line-height:1.65;
+    margin:0 0 22px;color:#3B3228;
+  }
+  .card-quote::before,.card-quote::after{color:var(--red);font-weight:900}
+  .card-quote::before{content:"“"}
+  .card-quote::after{content:"”"}
+  .card-meta{
+    display:flex;justify-content:space-between;align-items:center;
+    border-top:2px dashed rgba(23,19,15,.3);padding-top:16px;
+    font-size:12px;font-weight:800;color:var(--muted);letter-spacing:.08em;
+  }
+  .card-link{color:var(--ink);border-bottom:3px solid var(--yellow);cursor:pointer;font-weight:900;background:none;border-top:0;border-left:0;border-right:0;padding:0 0 2px}
+
+  /* ---------- 通用区块头 ---------- */
+  .sec{padding:56px 0}
+  .sec-head{display:flex;align-items:center;gap:18px;margin-bottom:34px;flex-wrap:wrap}
+  .sec-num{
+    width:52px;height:52px;flex:none;
+    background:var(--yellow);border:3px solid var(--ink);
+    display:grid;place-items:center;
+    font-family:var(--font-display);font-weight:900;font-size:20px;
+    box-shadow:4px 4px 0 var(--ink);
+  }
+  .sec-head h2{
+    font-family:var(--font-display);font-weight:900;
+    font-size:clamp(30px,4.2vw,52px);letter-spacing:-.03em;margin:0;
+  }
+  .sec-head p{margin:0 0 4px auto;font-size:13px;font-weight:800;color:var(--muted);letter-spacing:.06em}
+  .rule{height:3px;background:var(--ink);flex:1;min-width:40px}
+
+  /* ---------- 摊位 ---------- */
+  .stalls{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:22px;
+  }
+  .stall{
+    position:relative;background:var(--paper-2);
+    border:3px solid var(--ink);padding:24px 22px 20px;
+    box-shadow:6px 6px 0 rgba(23,19,15,.9);
+    transition:transform .18s,box-shadow .18s;
+  }
+  .stall:hover{transform:translate(-3px,-3px);box-shadow:10px 10px 0 var(--red)}
+  .stall-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px}
+  .stall-ico{font-size:40px;line-height:1}
+  .stall-no{
+    font-size:11px;font-weight:900;letter-spacing:.12em;
+    border:2px solid var(--ink);padding:3px 7px;
+  }
+  .stall h3{
+    font-family:var(--font-display);font-weight:900;font-size:24px;
+    letter-spacing:-.02em;margin:8px 0 4px;
+  }
+  .stall-kind{font-size:12px;font-weight:800;letter-spacing:.12em;color:var(--muted);margin-bottom:14px}
+  .items{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px}
+  .items span{
+    font-size:12px;font-weight:700;padding:5px 9px;
+    border:2px solid rgba(23,19,15,.85);background:#fff;
+  }
+  .items span.hot{
+    background:var(--red);color:#fff;
+    box-shadow:2px 2px 0 var(--ink);
+  }
+  .items span.hot b{
+    display:inline-block;margin-left:4px;
+    font-size:11px;font-weight:900;letter-spacing:.02em;color:var(--yellow);
+    font-variant-numeric:tabular-nums;
+  }
+  .items span.hot.pulse b{animation:pricePulse .55s ease-out}
+  @keyframes pricePulse{0%{transform:scale(1.35);color:#fff}100%{transform:scale(1)}}
+  .stall-quote{
+    font-family:var(--font-hand);font-size:18px;line-height:1.6;
+    color:#43392D;border-top:2px dashed rgba(23,19,15,.25);padding-top:13px;margin:0;
+  }
+  .fresh-timer{
+    font-size:12px;font-weight:900;letter-spacing:.08em;
+    border:2px solid var(--ink);background:var(--yellow);
+    padding:6px 10px;white-space:nowrap;
+    font-variant-numeric:tabular-nums;
+  }
+  .fresh-badge{
+    position:absolute;left:-12px;top:-14px;z-index:2;
+    background:var(--red);color:#fff;border:3px solid var(--ink);
+    font-size:11px;font-weight:900;letter-spacing:.12em;
+    padding:6px 10px;transform:rotate(-6deg);
+    box-shadow:3px 3px 0 var(--ink);
+    animation:stampIn .3s ease-out;pointer-events:none;
+  }
+  @keyframes stampIn{from{transform:rotate(-6deg) scale(1.7);opacity:0}to{transform:rotate(-6deg) scale(1);opacity:1}}
+  .stall.flash{animation:stallFlash 1.2s ease-out}
+  @keyframes stallFlash{0%{background:#FFF3C4}100%{background:var(--paper-2)}}
+
+  /* ---------- 时价 ---------- */
+  .board-wrap{display:grid;grid-template-columns:1.35fr .65fr;gap:26px;align-items:stretch}
+  .board{
+    background:var(--green);color:#F4EEDF;
+    border:3px solid var(--ink);box-shadow:9px 9px 0 var(--ink);
+    padding:26px 28px 20px;
+  }
+  .board-head{
+    display:flex;justify-content:space-between;align-items:flex-end;gap:16px;
+    border-bottom:3px solid rgba(244,238,223,.5);padding-bottom:14px;margin-bottom:8px;
+  }
+  .board-head h3{
+    font-family:var(--font-display);font-weight:900;font-size:26px;margin:0;letter-spacing:-.02em;
+  }
+  .board-head span{font-size:12px;font-weight:800;letter-spacing:.08em;color:#CFE7D9}
+  .board-grid{display:grid;grid-template-columns:1fr 1fr;column-gap:34px}
+  .price-line{
+    display:flex;justify-content:space-between;gap:10px;
+    padding:12px 0;border-bottom:1px dashed rgba(244,238,223,.22);
+    font-size:16px;
+  }
+  .price-line b{font-weight:700}
+  .price-line .val{font-weight:900;color:var(--yellow);font-family:var(--font-display);letter-spacing:-.01em}
+  .up{color:#FF9C82;font-size:13px;font-weight:900}
+  .down{color:#9BE3B0;font-size:13px;font-weight:900}
+  .flat{color:rgba(244,238,223,.55);font-size:13px;font-weight:900}
+
+  .board-side{
+    display:flex;flex-direction:column;gap:16px;justify-content:space-between;
+  }
+  .note-card{
+    background:var(--paper-2);border:3px solid var(--ink);
+    padding:20px;box-shadow:6px 6px 0 var(--ink);
+  }
+  .note-card .label{font-size:11px;font-weight:900;letter-spacing:.16em;color:var(--red);margin-bottom:8px}
+  .note-card p{
+    font-family:var(--font-hand);font-size:20px;line-height:1.7;margin:0 0 16px;color:#3D3328;
+  }
+  .note-card .tag{
+    display:inline-block;background:var(--yellow);border:2px solid var(--ink);
+    font-size:11px;font-weight:900;letter-spacing:.12em;padding:5px 9px;
+  }
+  .stamp-card{
+    border:3px solid var(--ink);background:var(--red);color:#fff;
+    padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;
+    font-weight:900;letter-spacing:.06em;font-size:14px;
+  }
+  .stamp-card b{font-family:var(--font-display);font-size:32px;line-height:1}
+
+  /* ---------- 大字报横幅 ---------- */
+  .band{
+    margin:64px 0;
+    background:var(--red);color:var(--yellow);
+    border-top:3px solid var(--ink);border-bottom:3px solid var(--ink);
+    padding:64px 0 58px;position:relative;overflow:hidden;
+  }
+  .band::before{
+    content:"";position:absolute;inset:0;
+    background:repeating-linear-gradient(-45deg,rgba(255,255,255,.06) 0 2px,transparent 2px 18px);
+  }
+  .band .wrap{position:relative}
+  .band-text{
+    font-family:var(--font-display);font-weight:900;
+    font-size:clamp(38px,7.4vw,88px);line-height:1.06;
+    letter-spacing:-.03em;margin:0;
+    text-shadow:6px 6px 0 var(--ink);
+  }
+  .band-caption{
+    margin:26px 0 0;color:#FFE9A8;font-weight:800;font-size:14px;letter-spacing:.14em;
+  }
+  .band-stamp{
+    position:absolute;right:6%;top:50%;transform:translateY(-50%) rotate(-8deg);
+    border:4px solid rgba(255,231,163,.9);color:#FFE9A8;
+    padding:12px 18px;font-family:var(--font-display);font-weight:900;
+    font-size:clamp(14px,2vw,20px);letter-spacing:.22em;opacity:.9;
+  }
+
+  /* ---------- 聊天 ---------- */
+  .chat-shell{
+    max-width:860px;margin:0 auto;
+    border:3px solid var(--ink);background:var(--paper-2);
+    box-shadow:12px 12px 0 var(--ink);
+  }
+  .awning{
+    height:18px;
+    background:repeating-linear-gradient(90deg,var(--red) 0 30px,var(--yellow) 30px 60px);
+    border-bottom:3px solid var(--ink);
+  }
+  .chat-head{
+    display:flex;align-items:center;gap:14px;
+    padding:16px 20px;background:var(--yellow);
+    border-bottom:3px solid var(--ink);
+  }
+  .avatar{
+    width:42px;height:42px;flex:none;border-radius:50%;
+    border:3px solid var(--ink);background:#fff;
+    display:grid;place-items:center;font-size:21px;
+  }
+  .chat-who b{display:block;font-family:var(--font-display);font-weight:900;font-size:18px;letter-spacing:-.01em}
+  .chat-who span{font-size:11px;font-weight:800;letter-spacing:.08em;color:#6A4B00}
+  .chat-status{
+    margin-left:auto;display:flex;align-items:center;gap:7px;
+    font-size:11px;font-weight:900;letter-spacing:.1em;
+  }
+  .chat-body{
+    height:390px;overflow-y:auto;padding:22px;
+    display:flex;flex-direction:column;gap:14px;
+    background:
+      linear-gradient(rgba(255,255,255,.55) 1px,transparent 1px) 0 0/100% 32px,
+      var(--paper-2);
+  }
+  .chat-body::-webkit-scrollbar{width:10px}
+  .chat-body::-webkit-scrollbar-thumb{background:var(--ink);border:3px solid var(--paper-2)}
+  .msg{display:flex;gap:9px;max-width:88%;animation:pop .22s ease-out}
+  .msg .avatar{width:32px;height:32px;font-size:16px;border-width:2px}
+  .bubble{
+    border:3px solid var(--ink);background:#fff;
+    padding:11px 14px;font-size:15px;line-height:1.7;
+    box-shadow:3px 3px 0 rgba(23,19,15,.16);
+  }
+  .msg.bot{align-self:flex-start}
+  .msg.user{align-self:flex-end;flex-direction:row-reverse}
+  .msg.user .bubble{background:var(--yellow)}
+  .msg.typing .bubble{display:flex;gap:5px;align-items:center;padding:16px 16px}
+  .msg.typing i{
+    width:7px;height:7px;border-radius:50%;background:var(--ink);display:block;
+    animation:bounce 1s infinite;
+  }
+  .msg.typing i:nth-child(2){animation-delay:.15s}
+  .msg.typing i:nth-child(3){animation-delay:.3s}
+  @keyframes bounce{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-5px);opacity:1}}
+  @keyframes pop{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .chat-foot{border-top:3px solid var(--ink);padding:14px 16px 16px;background:var(--paper)}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:11px}
+  .chip{
+    font-size:12.5px;font-weight:800;padding:7px 12px;
+    border:2px solid var(--ink);background:transparent;cursor:pointer;
+    transition:background .15s,transform .15s;
+  }
+  .chip:hover{background:var(--yellow);transform:translateY(-1px)}
+  .composer{display:flex;gap:10px;position:relative;flex-wrap:wrap}
+  .composer input{
+    flex:1;min-width:0;border:3px solid var(--ink);background:#fff;
+    padding:12px 14px;font-size:15px;font-family:inherit;outline:none;
+  }
+  .composer input:focus{box-shadow:inset 0 0 0 2px var(--yellow)}
+  .send{
+    border:3px solid var(--ink);background:var(--red);color:#fff;
+    font-weight:900;font-size:15px;padding:0 24px;cursor:pointer;
+    box-shadow:4px 4px 0 var(--ink);
+  }
+  .send:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--ink)}
+  .chat-hint{margin:14px 0 0;text-align:center;font-size:11.5px;font-weight:700;color:var(--muted);letter-spacing:.06em}
+
+  .ai-bar{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;position:relative;user-select:none}
+  .ai-bar.folded{margin-bottom:6px}
+  .ai-fold{
+    margin-left:auto;border:2px solid var(--ink);background:transparent;
+    font-size:11px;font-weight:900;padding:5px 9px;cursor:pointer;line-height:1;
+  }
+  .ai-fold:hover{background:var(--yellow)}
+  .mode-btn.mini{font-size:11px;padding:5px 10px}
+  .ai-label{font-size:11px;font-weight:900;letter-spacing:.08em;color:var(--muted);white-space:nowrap}
+  .mode-btn{
+    font-size:12px;font-weight:800;padding:6px 12px;
+    border:2px solid var(--ink);background:transparent;cursor:pointer;
+  }
+  .mode-btn.active{background:var(--ink);color:var(--yellow)}
+  .mode-btn:hover:not(.active){background:var(--yellow)}
+  .ds-pop{
+    position:absolute;left:0;bottom:calc(100% + 8px);z-index:40;
+    width:min(340px,100%);padding:12px;background:var(--paper-2);
+    border:3px solid var(--ink);box-shadow:6px 6px 0 var(--ink);
+    display:flex;flex-direction:column;gap:8px;
+  }
+  .ds-pop input{
+    border:2px solid var(--ink);background:#fff;padding:9px 10px;
+    font-size:13px;font-family:inherit;outline:none;
+  }
+  .ds-pop input:focus{box-shadow:inset 0 0 0 2px var(--yellow)}
+  .ds-pop .send{align-self:flex-end;padding:8px 18px;font-size:13px}
+
+  .bargain{
+    border:3px solid var(--ink);background:var(--yellow);color:var(--ink);
+    font-weight:900;font-size:15px;padding:0 18px;cursor:pointer;white-space:nowrap;
+    box-shadow:4px 4px 0 var(--ink);
+  }
+  .bargain:hover{background:#FFDE5C}
+  .bargain:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--ink)}
+  .bargain:disabled{opacity:.5;cursor:default}
+
+  .composer{position:relative;flex-wrap:wrap}
+  .composer input{flex:1 1 150px}
+  .icon-btn{
+    border:3px solid var(--ink);background:#fff;font-size:17px;line-height:1;
+    padding:8px 11px;cursor:pointer;
+  }
+  .icon-btn:hover{background:var(--yellow)}
+  .emoji-pop{
+    position:absolute;right:0;bottom:calc(100% + 10px);z-index:30;
+    width:268px;padding:10px;background:var(--paper-2);
+    border:3px solid var(--ink);box-shadow:6px 6px 0 var(--ink);
+  }
+  .emoji-pop .emoji-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:2px}
+  .emoji-pop button{
+    border:none;background:transparent;font-size:19px;padding:4px 0;
+    cursor:pointer;line-height:1.2;
+  }
+  .emoji-pop button:hover{background:var(--yellow)}
+  .emoji-pop .emoji-title{
+    font-size:10px;font-weight:900;letter-spacing:.12em;color:var(--muted);
+    margin:0 0 6px 2px;
+  }
+  .chat-img{display:block;max-width:190px;max-height:190px;border:2px solid var(--ink)}
+  .msg.sticker .bubble{
+    background:transparent;border:none;box-shadow:none;
+    font-size:46px;line-height:1;padding:2px 6px;
+  }
+
+  .msg.sys{align-self:center;max-width:90%}
+  .msg.sys .bubble{
+    background:var(--ink);color:var(--yellow);border-color:var(--ink);
+    font-weight:800;font-size:13px;letter-spacing:.04em;text-align:center;
+  }
+
+  .stall-chat{
+    margin-top:14px;width:100%;
+    border:2px solid var(--ink);background:transparent;color:var(--ink);
+    font-size:13px;font-weight:800;padding:9px 12px;cursor:pointer;
+    transition:background .15s;
+  }
+  .stall-chat:hover{background:var(--yellow)}
+
+  .chat-grid{
+    display:grid;grid-template-columns:1.55fr .95fr;gap:22px;align-items:start;
+  }
+  .rank-card{
+    background:var(--paper-2);border:3px solid var(--ink);
+    box-shadow:8px 8px 0 var(--ink);padding:20px 18px;
+  }
+  .rank-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;
+    border-bottom:3px solid var(--ink);padding-bottom:14px;margin-bottom:8px}
+  .rank-title{font-family:var(--font-display);font-weight:900;font-size:20px;letter-spacing:-.01em}
+  .rank-sub{font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--red);margin-top:3px}
+  .mine{
+    background:var(--yellow);border:2px solid var(--ink);
+    padding:6px 10px;text-align:center;white-space:nowrap;
+  }
+  .mine span{display:block;font-size:10px;font-weight:900;letter-spacing:.1em}
+  .mine b{
+    display:block;font-family:var(--font-display);font-weight:900;font-size:26px;line-height:1.1;
+    font-variant-numeric:tabular-nums;
+  }
+  .mine b.bump{animation:bump .5s ease-out}
+  @keyframes bump{0%{transform:scale(1.5);color:var(--red)}100%{transform:scale(1)}}
+  .rank-list{list-style:none;margin:0;padding:0}
+  .rank-list li{
+    display:flex;align-items:center;gap:10px;
+    padding:9px 6px;border-bottom:1px dashed rgba(23,19,15,.25);font-size:14px;
+  }
+  .rank-list .rk{
+    width:26px;height:26px;flex:none;display:grid;place-items:center;
+    font-family:var(--font-display);font-weight:900;font-size:13px;
+    border:2px solid var(--ink);background:#fff;
+  }
+  .rank-list li.top .rk{background:var(--red);color:#fff}
+  .rank-list .nm{font-weight:700}
+  .rank-list .sc{
+    margin-left:auto;font-family:var(--font-display);font-weight:900;
+    font-variant-numeric:tabular-nums;
+  }
+  .rank-list li.me{background:var(--yellow);border-bottom:2px solid var(--ink)}
+  .rank-hint{
+    margin:12px 0 0;font-size:11px;font-weight:700;color:var(--muted);line-height:1.6;
+  }
+
+  /* ---------- 页脚 ---------- */
+  footer{
+    margin-top:76px;background:var(--ink);color:#D9CDBA;
+    border-top:3px solid var(--ink);padding:34px 0;
+  }
+  .foot{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap}
+  .foot b{color:var(--yellow);font-family:var(--font-display);font-weight:900;font-size:17px;letter-spacing:-.01em}
+  .foot span{font-size:12px;letter-spacing:.08em}
+  .foot .foot-links{display:flex;gap:20px;font-size:12px;font-weight:700}
+  .foot .foot-links a{border-bottom:1px solid rgba(217,205,186,.4)}
+
+  .reveal{opacity:0;transform:translateY(20px);transition:opacity .6s ease,transform .6s ease}
+  .reveal.in{opacity:1;transform:none}
+
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none!important;transition:none!important}
+    .reveal{opacity:1;transform:none}
+  }
+
+  @media (max-width:980px){
+    .hero-grid{grid-template-columns:1fr;gap:44px}
+    .hero{padding:52px 0 40px}
+    .stall-card-hero{max-width:460px;transform:rotate(.8deg)}
+    .stalls{grid-template-columns:1fr 1fr}
+    .board-wrap{grid-template-columns:1fr}
+    .chat-grid{grid-template-columns:1fr}
+    .band-stamp{display:none}
+    .nav{display:none}
+  }
+  @media (max-width:640px){
+    .topbar .wrap{height:64px}
+    .logo b{font-size:20px}
+    .market-state{display:none}
+    .stalls{grid-template-columns:1fr}
+    .board-grid{grid-template-columns:1fr}
+    .board-head{flex-direction:column;align-items:flex-start;gap:6px}
+    .sec-head p{margin-left:0;width:100%}
+    .hero-sub{font-size:15.5px}
+    .chat-body{height:360px;padding:16px}
+    .msg{max-width:94%}
+    .band{padding:46px 0 42px}
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap">
+    <a class="logo" href="#top"><b>FOOD<span>EXPLORER</span></b><i>菜市场</i></a>
+    <nav class="nav">
+      <a href="#stalls">逛摊位</a>
+      <a href="#price">今日时价</a>
+      <a href="#chat">找摊主聊</a>
+    </nav>
+    <div class="market-state"><span class="dot"></span>今日已开市 · 06:00–19:00</div>
+  </div>
+</header>
+
+<div class="ticker" aria-hidden="true">
+  <div class="ticker-track">
+    <span>★ 凌晨三点拔的小青菜 ★ 王婶独家吹嘘 ★ 老李的鱼还在甩尾 ★ 阿婆豆腐只做两板 ★ 全场不接受赊账 ★ 砍价请找 01 号摊 ★</span>
+    <span>★ 凌晨三点拔的小青菜 ★ 王婶独家吹嘘 ★ 老李的鱼还在甩尾 ★ 阿婆豆腐只做两板 ★ 全场不接受赊账 ★ 砍价请找 01 号摊 ★</span>
+  </div>
+</div>
+
+<main id="top">
+
+  <!-- HERO -->
+  <section class="hero wrap">
+    <div class="hero-grid">
+      <div>
+        <div class="eyebrow">食物探索 · 城南菜市场 · 今日营业</div>
+        <h1>
+          <span class="line">今天</span>
+          <span class="line"><span class="hl">吃点什么</span><span class="q">？</span></span>
+        </h1>
+        <p class="hero-sub">
+          不刷评分，不看探店。菜市场里最会演戏的那群人，才知道今天什么值得买。
+          从 01 号摊的青菜，到 06 号档的手擀面，一条街逛完，晚饭就有了。
+        </p>
+        <div class="actions">
+          <a class="btn primary" href="#stalls">逛六个摊位 ↗</a>
+          <button class="btn" id="askWang">让王婶推荐</button>
+        </div>
+      </div>
+
+      <aside class="stall-card-hero reveal">
+        <div class="tape" aria-hidden="true"></div>
+        <div class="card-head">
+          <div class="avatar-lg" aria-hidden="true">🧺</div>
+          <div>
+            <div class="card-name">王婶</div>
+            <div class="card-role">01 号摊 · 蔬菜 · 戏精本精</div>
+          </div>
+        </div>
+        <p class="card-quote">我这菜，凌晨三点从地里拔的，比你起得早。</p>
+        <div class="card-meta">
+          <span>从业 23 年 · 不接受赊账</span>
+          <button class="card-link" id="cardChat">跟她唠两句 →</button>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- 摊位 -->
+  <section class="sec wrap" id="stalls">
+    <div class="sec-head reveal">
+      <div class="sec-num">01</div>
+      <h2>六个摊位，一条街</h2>
+      <div class="rule" aria-hidden="true"></div>
+      <p>红标 = 今日特价 · 价格随行就市</p>
+      <span class="fresh-timer" id="freshTimer">下一轮上新 · 30s</span>
+    </div>
+
+    <div class="stalls">
+      <article class="stall reveal">
+        <div class="stall-top">
+          <div class="stall-ico" aria-hidden="true">🥬</div>
+          <div class="stall-no">№ 01</div>
+        </div>
+        <h3>王婶蔬菜摊</h3>
+        <div class="stall-kind">时令菜 · 现拔现卖</div>
+        <div class="items"><span>小青菜</span><span>西红柿</span><span>螺丝椒</span><span>嫩黄瓜</span><span>冬瓜</span></div>
+        <p class="stall-quote">我这菜，凌晨三点从地里拔的，比你起得早。</p>
+      </article>
+
+      <article class="stall reveal">
+        <div class="stall-top">
+          <div class="stall-ico" aria-hidden="true">🐟</div>
+          <div class="stall-no">№ 02</div>
+        </div>
+        <h3>老李水产</h3>
+        <div class="stall-kind">活水 · 当日到货</div>
+        <div class="items"><span>活鲫鱼</span><span>基围虾</span><span>花蛤</span><span>鲈鱼</span><span>花蟹</span></div>
+        <p class="stall-quote">鱼还在甩尾，不信你听，别嫌水溅你一身。</p>
+      </article>
+
+      <article class="stall reveal">
+        <div class="stall-top">
+          <div class="stall-ico" aria-hidden="true">🧈</div>
+          <div class="stall-no">№ 03</div>
+        </div>
+        <h3>阿婆豆腐坊</h3>
+        <div class="stall-kind">石磨 · 只做两板</div>
+        <div class="items"><span>嫩豆腐</span><span>豆干</span><span>豆腐皮</span><span>豆浆</span><span>油豆腐</span></div>
+        <p class="stall-quote">只做两板，卖完收摊，明天请早。</p>
+      </article>
+
+      <article class="stall reveal">
+        <div class="stall-top">
+          <div class="stall-ico" aria-hidden="true">🥩</div>
+          <div class="stall-no">№ 04</div>
+        </div>
+        <h3>张叔肉铺</h3>
+        <div class="stall-kind">刀工 · 三十年</div>
+        <div class="items"><span>五花</span><span>里脊</span><span>排骨</span><span>猪蹄</span><span>牛腩</span></div>
+        <p class="stall-quote">刀工三十年，切多切少我说了算。</p>
+      </article>
+
+      <article class="stall reveal">
+        <div class="stall-top">
+          <div class="stall-ico" aria-hidden="true">🍊</div>
+          <div class="stall-no">№ 05</div>
+        </div>
+        <h3>果果水果摊</h3>
+        <div class="stall-kind">鲜果 · 先尝后买</div>
+        <div class="items"><span>砂糖橘</span><span>草莓</span><span>冬枣</span><span>苹果</span><span>香蕉</span></div>
+        <p class="stall-quote">先尝后买，尝了不买也行——我记仇。</p>
+      </article>
+
+      <article class="stall reveal">
+        <div class="stall-top">
+          <div class="stall-ico" aria-hidden="true">🥟</div>
+          <div class="stall-no">№ 06</div>
+        </div>
+        <h3>面点档</h3>
+        <div class="stall-kind">手擀 · 现包现煮</div>
+        <div class="items"><span>手擀面</span><span>馄饨皮</span><span>现包饺子</span><span>烧麦</span><span>花卷</span></div>
+        <p class="stall-quote">面和了二十年，脾气也是。</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- 时价 -->
+  <section class="sec wrap" id="price">
+    <div class="sec-head reveal">
+      <div class="sec-num">02</div>
+      <h2>今日时价</h2>
+      <div class="rule" aria-hidden="true"></div>
+      <p>06:40 更新 · 价格会变，嘴不会</p>
+    </div>
+
+    <div class="board-wrap">
+      <div class="board reveal">
+        <div class="board-head">
+          <h3>城南菜市场 · 价目牌</h3>
+          <span>单位：元 / 斤（另注明除外）</span>
+        </div>
+        <div class="board-grid">
+          <div class="price-line"><b>小青菜</b><span class="val">3.5 <span class="down">↓</span></span></div>
+          <div class="price-line"><b>西红柿</b><span class="val">4.8 <span class="up">↑</span></span></div>
+          <div class="price-line"><b>螺丝椒</b><span class="val">6.0 <span class="flat">—</span></span></div>
+          <div class="price-line"><b>嫩豆腐</b><span class="val">2.0 <span class="flat">/ 块</span></span></div>
+          <div class="price-line"><b>活鲫鱼</b><span class="val">12.0 <span class="up">↑</span></span></div>
+          <div class="price-line"><b>基围虾</b><span class="val">38.0 <span class="down">↓</span></span></div>
+          <div class="price-line"><b>鲈鱼</b><span class="val">22.0 <span class="up">↑</span></span></div>
+          <div class="price-line"><b>五花肉</b><span class="val">28.0 <span class="flat">—</span></span></div>
+          <div class="price-line"><b>砂糖橘</b><span class="val">8.0 <span class="down">↓</span></span></div>
+          <div class="price-line"><b>黄瓜</b><span class="val">4.0 <span class="flat">—</span></span></div>
+          <div class="price-line"><b>手擀面</b><span class="val">5.0 <span class="flat">/ 份</span></span></div>
+          <div class="price-line"><b>现包饺子</b><span class="val">18.0 <span class="flat">/ 斤</span></span></div>
+        </div>
+      </div>
+
+      <div class="board-side">
+        <div class="note-card reveal">
+          <div class="label">摊主提示</div>
+          <p>想便宜？先夸我菜好，再问价。顺序反了，价就上去了。</p>
+          <span class="tag">砍价成功率 62%</span>
+        </div>
+        <div class="stamp-card reveal">
+          <span>今日到货<br>凌晨三点</span>
+          <b>2</b>
+          <span>板豆腐<br>售完即止</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 大字报 -->
+  <section class="band">
+    <div class="wrap">
+      <p class="band-text">菜要挑，价要砍，<br>人要熟。</p>
+      <p class="band-caption">—— 城南菜市场第 01 条生存法则</p>
+      <div class="band-stamp" aria-hidden="true">童叟无欺</div>
+    </div>
+  </section>
+
+  <!-- 聊天 -->
+  <section class="sec wrap" id="chat">
+    <div class="sec-head reveal">
+      <div class="sec-num">03</div>
+      <h2>找摊主聊聊 · 顺手砍个价</h2>
+      <div class="rule" aria-hidden="true"></div>
+      <p>从哪个摊位点进来，就跟谁聊；砍价成功 +2 分</p>
+    </div>
+
+    <div class="chat-grid">
+      <div class="chat-shell reveal">
+        <div class="awning" aria-hidden="true"></div>
+        <div class="chat-head">
+          <div class="avatar" id="chatAvatar" aria-hidden="true">🧺</div>
+          <div class="chat-who">
+            <b id="chatName">王婶</b>
+            <span id="chatRole">01 号摊 · 蔬菜 · 戏精本精</span>
+          </div>
+          <div class="chat-status"><span class="dot"></span>正在守摊</div>
+        </div>
+
+        <div class="chat-body" id="chatBody" aria-live="polite"></div>
+
+        <div class="chat-foot">
+          <div class="ai-bar" id="aiBar" title="双击折叠 / 展开">
+            <span class="ai-label">回复来源</span>
+            <button class="mode-btn active" id="modeLocal" type="button">本地话术</button>
+            <button class="mode-btn" id="modeDS" type="button">DeepSeek</button>
+            <button class="icon-btn" id="dsGear" type="button" title="接口设置" hidden>⚙</button>
+            <button class="ai-fold" id="aiFold" type="button" title="收起这行">▾</button>
+            <button class="mode-btn mini" id="aiUnfold" type="button" title="展开回复来源" hidden>回复来源 ▸</button>
+            <div class="ds-pop" id="dsPop" hidden>
+              <input id="dsKeyInput" type="password" autocomplete="off" placeholder="sk-…（DeepSeek API Key）">
+              <input id="dsBaseInput" type="text" placeholder="接口地址，默认 https://api.deepseek.com">
+              <button class="send" id="dsSave" type="button">保存</button>
+            </div>
+          </div>
+          <div class="chips" id="chips">
+            <button class="chip">今天什么最便宜？</button>
+            <button class="chip">你这儿什么最新鲜？</button>
+            <button class="chip">帮我配一顿饭</button>
+            <button class="chip">你家东西是不是有点贵？</button>
+          </div>
+          <form class="composer" id="composer">
+            <input id="chatInput" type="text" autocomplete="off" placeholder="问点菜的，或者聊聊今天行情">
+            <button class="icon-btn" id="emojiBtn" type="button" title="表情">😊</button>
+            <button class="icon-btn" id="imgBtn" type="button" title="发图片/动图">🖼</button>
+            <button class="bargain" id="bargainBtn" type="button">🔪 砍价</button>
+            <button class="send" type="submit">发送</button>
+            <input type="file" id="imgFile" accept="image/*" hidden>
+            <div class="emoji-pop" id="emojiPop" hidden>
+              <p class="emoji-title">表情 · 点一下插进输入框</p>
+              <div class="emoji-grid" id="emojiGrid"></div>
+            </div>
+          </form>
+          <p class="chat-hint">默认本地话术（零依赖）；切 DeepSeek 后由 AI 扮演摊主——人设照旧、戏精不减；Key 仅存本机，砍价积分始终本地判定。</p>
+        </div>
+      </div>
+
+      <aside class="rank-card reveal">
+        <div class="rank-head">
+          <div>
+            <div class="rank-title">今日砍价榜</div>
+            <div class="rank-sub">砍价成功一次 +2 分</div>
+          </div>
+          <div class="mine"><span>我的积分</span><b id="myScore">0</b></div>
+        </div>
+        <ol class="rank-list" id="rankList"></ol>
+        <p class="rank-hint">初次进场，积分随机分配——手气好坏，砍价见真章。</p>
+      </aside>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <b>FOODEXPLORER · 菜市场大字报</b>
+    <span>戏精 × 聊天助手 × 菜市场大字报 · 单文件演示</span>
+    <div class="foot-links">
+      <a href="#stalls">摊位</a>
+      <a href="#price">时价</a>
+      <a href="#chat">找摊主</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  /* ================= 聊天：六位店长 · 各有脾气 ================= */
+  var OWNERS = [
+    {
+      name: '王婶', emoji: '🧺', role: '01 号摊 · 蔬菜 · 戏精本精', rate: 0.6,
+      openLine: '老板，今天来点啥好？',
+      greet: [
+        '哟，来啦？我王婶，这个摊子的第六任摊主，前五任都让我给说走了。',
+        '今天想吃什么？青菜我这儿最水灵，别家你别去，去了也白去。'
+      ],
+      replies: [
+        { re: /便宜|实惠|打折|划算|优惠/, a: ['便宜？你这话说得，我心跳都漏了一拍。', '整条街就我这价最实在——我这是做慈善，你懂不懂。'] },
+        { re: /贵|坑|黑心|涨价/, a: ['贵？你摸摸这菜叶子，冰凉的，凌晨三点拔的。', '我贵的是良心，不是菜价。'] },
+        { re: /新鲜|水灵|好不好|怎么样/, a: ['新鲜到我都不好意思，它比我起得早。', '不新鲜你拿回来，我现场给你表演一个当场吃掉。'] },
+        { re: /推荐|吃什么|吃啥|配一顿|做饭|晚饭|午饭/, a: ['今晚就西红柿炒蛋，配个豆腐汤，再烫一把小青菜。', '三样加起来不到十块，吃得比外卖体面。'] },
+        { re: /减脂|减肥|低卡|轻食/, a: ['减脂啊？黄瓜、西红柿，再来块嫩豆腐，齐了。', '吃三天你就瘦了。瘦不了那是你晚上偷吃，别赖我的菜。'] },
+        { re: /你好|在吗|嗨|哈喽|你是谁/, a: ['在，我一年只在除夕那天不在，因为要回家包饺子。', '说吧，今天想拿点什么？'] }
+      ],
+      fallback: ['你这话我得琢磨琢磨。先来把青菜？', '（王婶把秤砣往桌上一放）说重点，买什么？', '我卖了二十三年菜，头回听人这么问。行吧，青菜是真的好。'],
+      win: ['行吧行吧，看在你嘴甜的份上——便宜两毛，拿去！', '啧，真拿你没办法。就这一次啊，下不为例！'],
+      lose: ['砍价？我王婶的摊子是能砍的？再去别家比比价！', '不砍！爱买买，不买看看——哦不，看看也别看太久。']
+    },
+    {
+      name: '老李', emoji: '🐟', role: '02 号档 · 水产 · 大嗓门', rate: 0.45,
+      openLine: '老李，今天鱼怎么样？',
+      greet: [
+        '来来来——靠边点！别挡着我泼水！',
+        '我这鱼今早刚靠岸，还在甩尾！你要不要？不要别占着道！'
+      ],
+      replies: [
+        { re: /便宜|实惠|打折|划算|优惠/, a: ['便宜？海里的东西可不跟我讲人情！', '嫌贵你去看冻柜，那边便宜，就是没魂儿。'] },
+        { re: /贵|坑|黑心|涨价/, a: ['贵？！你听听这水声，这叫活！活的就是这个价！', '我老李二十年没卖过一条死鱼，这叫口碑！'] },
+        { re: /新鲜|活|好不好|怎么样/, a: ['新鲜！鱼鳃红得跟灯笼似的，不信我捞给你看！', '虾还在蹦跶，你隔着三米都听得见！'] },
+        { re: /推荐|吃什么|吃啥|配一顿|做饭|晚饭|午饭/, a: ['鲫鱼炖汤！奶白的！孩子喝了蹭蹭长！', '基围虾白灼，蘸姜醋，别的都是糟蹋！'] },
+        { re: /你好|在吗|嗨|哈喽|你是谁/, a: ['在在在！大点声！我这水声大听不清！', '老李！水产 02！整条街嗓门最大的就是我了！'] }
+      ],
+      fallback: ['你说啥？大点声！', '别光站着！要捞哪条？！', '这话问的——鱼还能有坏心思？'],
+      win: ['行！冲你这一嗓子——抹个零头，拿走！', '哈哈，算你狠！今天鱼价我说了算——便宜！'],
+      lose: ['不砍不砍！海里的东西比我还横！', '砍价？你先跟那条鱼砍通了我再跟你砍！']
+    },
+    {
+      name: '阿婆', emoji: '🧈', role: '03 号坊 · 豆腐 · 慢工细活', rate: 0.8,
+      openLine: '阿婆，豆腐还有吗？',
+      greet: [
+        '哎哟，来啦，慢点走，地上有水。',
+        '豆腐还有半板，你要是不急，我给你挑最嫩的中间那块。'
+      ],
+      replies: [
+        { re: /便宜|实惠|打折|划算|优惠/, a: ['好呀好呀，两块就两块，做生意嘛，和气最要紧。'] },
+        { re: /贵|坑|黑心|涨价/, a: ['不贵的呀，我这三点就起来磨豆子了。', '黄豆今年贵了，我都没怎么涨你的呀。'] },
+        { re: /新鲜|好不好|嫩|怎么样/, a: ['嫩的呀，你手指头轻轻一碰就知道，晃悠悠的。', '我做的豆腐，隔夜的不卖的呀，卖完就收摊。'] },
+        { re: /推荐|吃什么|吃啥|配一顿|做饭|晚饭|午饭/, a: ['天冷就豆腐煲，加把青菜，豆腐要最后放呀。', '小葱拌豆腐，一清二白，最养人了。'] },
+        { re: /你好|在吗|嗨|哈喽|你是谁/, a: ['哎，在的在的，耳朵还好使着呢。', '我都做了四十年豆腐咯，你小时候说不定还抱过你呢。'] }
+      ],
+      fallback: ['你说什么？凑近点，阿婆耳朵背。', '不急不急，慢慢说。', '买不买都不要紧，天冷，先暖暖手。'],
+      win: ['好好好，给你便宜点，年轻人挣钱也不容易哟。', '哎哟，被你说动咯，拿去吧拿去吧。'],
+      lose: ['哎呀，真不能再少了，再少阿婆要亏咯。', '豆腐不赚钱的呀，就赚个手艺钱哟。']
+    },
+    {
+      name: '张叔', emoji: '🥩', role: '04 号铺 · 猪肉 · 刀子嘴', rate: 0.3,
+      openLine: '张叔，来二斤排骨。',
+      greet: [
+        '要什么。说。',
+        '别磨蹭，后头还排着人呢。'
+      ],
+      replies: [
+        { re: /便宜|实惠|打折|划算|优惠/, a: ['不便宜。爱买不买。', '全市场就我一家明码标价，你打听打听。'] },
+        { re: /贵|坑|黑心|涨价/, a: ['贵？你去别家看看那肉色。', '我这刀三十年没切过一块注水肉。'] },
+        { re: /新鲜|好不好|怎么样/, a: ['凌晨到的货，你自己看色。', '不新鲜？我当场吃给你看——算了，脏。'] },
+        { re: /推荐|吃什么|吃啥|配一顿|做饭|晚饭|午饭/, a: ['五花爆炒，里脊煲汤，排骨红烧。完了。', '不会做就买五花，怎么烧都不难吃。'] },
+        { re: /你好|在吗|嗨|哈喽|你是谁/, a: ['在。要什么。', '张叔。三十年。就这个摊。'] }
+      ],
+      fallback: ['说重点。', '（刀往案板上一放）还想好了再来问。', '话真多。买哪块？'],
+      win: ['……行。就当交个朋友。便宜就便宜这一回。', '话真多，不过有理。拿去，便宜两块。'],
+      lose: ['不砍。我这儿的价，刀切的一样平。', '砍价浪费时间。要买快拿，不买让让。']
+    },
+    {
+      name: '果果', emoji: '🍊', role: '05 号摊 · 水果 · 俏皮记仇', rate: 0.55,
+      openLine: '果果，今天水果甜不甜？',
+      greet: [
+        '来啦来啦！先尝后买！这颗砂糖橘你先吃！',
+        '吃完了可不许不买哦——我可是会记仇的。'
+      ],
+      replies: [
+        { re: /便宜|实惠|打折|划算|优惠/, a: ['甜的东西，从来不便宜～', '你要是办卡——啊不是，你要是常来，我偷偷给你留好的！'] },
+        { re: /贵|坑|黑心|涨价/, a: ['贵吗？甜度摆在这儿呢，一口下去齁嗓子！', '上周隔壁摊的橘子，酸得我三天没睡好，我这可是良心价！'] },
+        { re: /新鲜|甜|好不好|怎么样/, a: ['甜不甜你先尝！不甜我当场吃十个给你看！', '今天到的草莓，红得发黑那种，最甜！'] },
+        { re: /推荐|吃什么|吃啥|配一顿|做饭|晚饭|午饭/, a: ['饭后水果嘛——砂糖橘配冬枣，绝了！', '榨汁就买雪梨，直接啃就选草莓，听我的没错！'] },
+        { re: /你好|在吗|嗨|哈喽|你是谁/, a: ['在呢在呢！全市场最好吃的水果摊，05 号！', '我是果果！尝了不买我会记仇的那种果果！'] }
+      ],
+      fallback: ['嗯？你再说一遍？我听甜度，不听别的～', '这个问题嘛……先吃颗橘子缓缓。', '想不出来吃什么就闭眼拿，我帮你挑！'],
+      win: ['哎呀好吧好吧！就冲你吃了三颗桔子的份上——便宜！', '讨厌～被你磨没脾气了，拿去拿去！'],
+      lose: ['不便宜！我记仇的，别以为我不知道你上周在别家买榴莲！', '砍不动砍不动～我这价是秤称出来的，不是嘴砍出来的！']
+    },
+    {
+      name: '周师傅', emoji: '🥟', role: '06 号档 · 面点 · 沉默实在', rate: 0.5,
+      openLine: '师傅，饺子什么馅的？',
+      greet: [
+        '（揉面）……来啦。',
+        '饺子白菜猪肉的，面条现擀的。要什么，说。'
+      ],
+      replies: [
+        { re: /便宜|实惠|打折|划算|优惠/, a: ['……五块就是五块。（揉面）', '面不骗人，价也不骗人。'] },
+        { re: /贵|坑|黑心|涨价/, a: ['粉涨价了，我没涨。这价，实在。', '嫌贵去吃泡面。（没抬头）'] },
+        { re: /新鲜|好不好|筋道|怎么样/, a: ['面和了二十年。筋道不筋道，煮了就知道。', '馅是早上现剁的。隔夜的我自己都不吃。'] },
+        { re: /推荐|吃什么|吃啥|配一顿|做饭|晚饭|午饭/, a: ['一碗手擀面，卧个蛋。十分钟后取。', '带家去就买现包饺子，回家水开下锅。'] },
+        { re: /你好|在吗|嗨|哈喽|你是谁/, a: ['（点头）', '周师傅。面点档。有话快说，面醒着呢。'] }
+      ],
+      fallback: ['（继续揉面）……嗯。', '想好了说。', '面点的事，你问我，我答。别的不管。'],
+      win: ['……行吧。（顿了顿）少你一块。别声张。', '（擦手）你这个人……拿去，便宜了。'],
+      lose: ['不行。（揉面）', '面价如刀工，一刀是一刀。不砍。']
+    }
+  ];
+
+  /* 彩蛋：问「是不是有点贵」，六位店长异口同声—— */
+  OWNERS.forEach(function (o) {
+    o.replies.unshift({ re: /烧心|有点贵/, a: ['我这个菜，你们买回去吃的不烧心。'] });
+  });
+
+  /* 每位店长的签名表情包 */
+  var OWNER_STICKERS = [
+    ['😏', '💪', '🥬', '😤'],
+    ['🐟', '💦', '😤', '😂'],
+    ['🥰', '🧈', '😊', '👵'],
+    ['🥩', '😑', '🔪', '🙄'],
+    ['🍊', '😜', '😏', '😋'],
+    ['🥟', '😐', '🍲', '🙂']
+  ];
+
+  /* 基础表情（系统自带 emoji） */
+  var EMOJIS = ('😊 😂 🤣 😍 😭 😎 🙄 😤 😅 😩 👍 👌 🙏 💪 🔥 💰 🤝 😏 😴 😋 🤤 🤔 ' +
+    '😱 😜 😑 🙂 ❤️ 🎉 🥬 🍅 🌶️ 🍚 🍲 🐟 🧈 🥩 🍊 🥟 👵 🔪').split(' ');
+
+  /* DeepSeek 模式下喂给 AI 的人设（保持戏精不减） */
+  var OWNER_PERSONA = [
+    '王婶，卖菜二十三年，戏精本精，爱吹嘘自家菜凌晨三点现拔，嘴硬心软，金句是“我贵的是良心，不是菜价”。',
+    '老李，水产档大嗓门，句句带感叹号，爱吹鱼活水响，豪爽但不好惹。',
+    '阿婆，做了四十年豆腐，慈祥絮叨，语速慢，句尾常带“呀/咯/哟”，最容易被砍动。',
+    '张叔，猪肉铺刀子嘴，话极短，常用句号结尾（如“要什么。说。”），冷面但专业。',
+    '果果，水果摊俏皮姑娘，爱用“～”，口头禅“先尝后买”，嘴甜但爱记仇。',
+    '周师傅，面点师傅沉默寡言，回复里常带（揉面）（没抬头）这类动作描写，实在人。'
+  ];
+
+  var chatBody = document.getElementById('chatBody');
+  var form = document.getElementById('composer');
+  var input = document.getElementById('chatInput');
+  var chatAvatar = document.getElementById('chatAvatar');
+  var chatName = document.getElementById('chatName');
+  var chatRole = document.getElementById('chatRole');
+  var bargainBtn = document.getElementById('bargainBtn');
+
+  var currentOwner = 0;
+  var ownerToken = 0;
+  var busy = false;
+  var lastReply = '';
+
+  function pick(arr) {
+    if (arr.length === 1) return arr[0];
+    var s = arr[Math.floor(Math.random() * arr.length)];
+    if (s === lastReply) s = arr[(arr.indexOf(s) + 1) % arr.length];
+    lastReply = s;
+    return s;
+  }
+
+  function scrollBottom() {
+    chatBody.scrollTop = chatBody.scrollHeight;
+  }
+
+  function addMsg(text, who) {
+    var wrap = document.createElement('div');
+    wrap.className = 'msg ' + who;
+
+    var av = document.createElement('div');
+    av.className = 'avatar';
+    av.setAttribute('aria-hidden', 'true');
+    av.textContent = who === 'bot' ? OWNERS[currentOwner].emoji : '你';
+
+    var bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    bubble.textContent = text;
+
+    wrap.appendChild(av);
+    wrap.appendChild(bubble);
+    chatBody.appendChild(wrap);
+    scrollBottom();
+  }
+
+  function addSys(text) {
+    var wrap = document.createElement('div');
+    wrap.className = 'msg sys';
+    var bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    bubble.textContent = text;
+    wrap.appendChild(bubble);
+    chatBody.appendChild(wrap);
+    scrollBottom();
+  }
+
+  function addImg(src, who) {
+    var wrap = document.createElement('div');
+    wrap.className = 'msg ' + who;
+
+    var av = document.createElement('div');
+    av.className = 'avatar';
+    av.setAttribute('aria-hidden', 'true');
+    av.textContent = who === 'bot' ? OWNERS[currentOwner].emoji : '你';
+
+    var bubble = document.createElement('div');
+    bubble.className = 'bubble';
+
+    var img = document.createElement('img');
+    img.className = 'chat-img';
+    img.alt = '图片';
+    img.src = src;
+
+    bubble.appendChild(img);
+    wrap.appendChild(av);
+    wrap.appendChild(bubble);
+    chatBody.appendChild(wrap);
+    scrollBottom();
+  }
+
+  function addSticker(emoji, who) {
+    var wrap = document.createElement('div');
+    wrap.className = 'msg sticker ' + who;
+
+    var av = document.createElement('div');
+    av.className = 'avatar';
+    av.setAttribute('aria-hidden', 'true');
+    av.textContent = who === 'bot' ? OWNERS[currentOwner].emoji : '你';
+
+    var bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    bubble.textContent = emoji;
+
+    wrap.appendChild(av);
+    wrap.appendChild(bubble);
+    chatBody.appendChild(wrap);
+    scrollBottom();
+  }
+
+  /* 店长随手甩表情包 */
+  function maybeOwnerSticker(probability, delay) {
+    if (Math.random() > probability) return;
+    var my = ownerToken;
+    setTimeout(function () {
+      if (my === ownerToken) addSticker(pick(OWNER_STICKERS[currentOwner]), 'bot');
+    }, delay || 400);
+  }
+
+  function addTyping() {
+    var wrap = document.createElement('div');
+    wrap.className = 'msg bot typing';
+    wrap.id = 'typing';
+
+    var av = document.createElement('div');
+    av.className = 'avatar';
+    av.setAttribute('aria-hidden', 'true');
+    av.textContent = OWNERS[currentOwner].emoji;
+
+    var bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    for (var i = 0; i < 3; i++) bubble.appendChild(document.createElement('i'));
+
+    wrap.appendChild(av);
+    wrap.appendChild(bubble);
+    chatBody.appendChild(wrap);
+    scrollBottom();
+  }
+
+  function removeTyping() {
+    var t = document.getElementById('typing');
+    if (t) t.remove();
+  }
+
+  function replyFor(text, owner) {
+    for (var i = 0; i < owner.replies.length; i++) {
+      if (owner.replies[i].re.test(text)) return owner.replies[i].a;
+    }
+    return owner.fallback;
+  }
+
+  var IMG_URL_RE = /^https?:\/\/\S+\.(?:gif|png|jpe?g|webp)(\?\S*)?$/i;
+
+  function localReply(text) {
+    var delay = 550 + Math.random() * 550;
+    setTimeout(function () {
+      removeTyping();
+      addMsg(pick(replyFor(text, OWNERS[currentOwner])), 'bot');
+      maybeOwnerSticker(0.5);
+      busy = false;
+      if (bargainBtn) bargainBtn.disabled = false;
+    }, delay);
+  }
+
+  function aiReply(text, owner) {
+    callDS(text, owner, function (err, txt) {
+      removeTyping();
+      if (err || !txt) {
+        addSys('DeepSeek 调用失败（' + (err ? err.message : '空回复') + '），本地话术顶上');
+        addMsg(pick(replyFor(text, owner)), 'bot');
+      } else {
+        convHist.push({ role: 'user', content: text });
+        convHist.push({ role: 'assistant', content: txt });
+        addMsg(txt, 'bot');
+      }
+      maybeOwnerSticker(0.5);
+      busy = false;
+      if (bargainBtn) bargainBtn.disabled = false;
+    });
+  }
+
+  function send(text) {
+    text = (text || '').trim();
+    if (!text || busy) return;
+    if (IMG_URL_RE.test(text)) { sendImageUrl(text); return; }
+    busy = true;
+    if (bargainBtn) bargainBtn.disabled = true;
+    addMsg(text, 'user');
+    input.value = '';
+    addTyping();
+
+    if (aiMode) {
+      if (!dsKey) {
+        setTimeout(function () {
+          removeTyping();
+          busy = false;
+          if (bargainBtn) bargainBtn.disabled = false;
+          dsPop.hidden = false;
+          addSys('还没填 DeepSeek API Key，点 ⚙ 填一下，或先用本地话术');
+        }, 300);
+        return;
+      }
+      aiReply(text, OWNERS[currentOwner]);
+      return;
+    }
+    localReply(text);
+  }
+
+  /* DeepSeek 调用：摊主人设 system prompt，戏精不减 */
+  function callDS(userText, owner, done) {
+    var sys = '你在「城南菜市场」网页里扮演' + owner.role + '的摊主' + owner.name +
+      '。人设：' + OWNER_PERSONA[currentOwner] +
+      ' 要求：只用中文口语短句回复（一般不超过 40 字），保持戏精和摊主江湖气，最多带一个 emoji；' +
+      '绝不承认自己是 AI、助手或客服；只聊买菜、吃的、行情，跑题就往菜上拽；不列清单、不写长篇、不复述要求。' +
+      '彩蛋：顾客问“是不是有点贵”时，回答「我这个菜，你们买回去吃的不烧心。」';
+    var msgs = [{ role: 'system', content: sys }]
+      .concat(convHist.slice(-16))
+      .concat([{ role: 'user', content: userText }]);
+
+    fetch(dsBase.replace(/\/+$/, '') + '/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + dsKey
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: msgs,
+        max_tokens: 120,
+        temperature: 1.2,
+        stream: false
+      })
+    })
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function (d) {
+        var txt = d && d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content;
+        done(null, txt && txt.trim());
+      })
+      .catch(function (err) { done(err); });
+  }
+
+  /* ================= 积分与排行榜 ================= */
+  var myScore = Math.floor(Math.random() * 11); /* 0~10 随机初始 */
+  var RIVAL_NAMES = ['隔壁刘阿姨', '三楼小张', '保安老周', '二单元王奶奶', '加班族小陈'];
+  var rivals = RIVAL_NAMES.map(function (n) {
+    return { name: n, score: 4 + Math.floor(Math.random() * 15) };
+  });
+  var rankListEl = document.getElementById('rankList');
+  var myScoreEl = document.getElementById('myScore');
+
+  function renderRank() {
+    var all = rivals.map(function (r) { return { name: r.name, score: r.score, me: false }; });
+    all.push({ name: '你', score: myScore, me: true });
+    all.sort(function (a, b) { return b.score - a.score; });
+    myScoreEl.textContent = myScore;
+    myScoreEl.classList.remove('bump');
+    void myScoreEl.offsetWidth;
+    myScoreEl.classList.add('bump');
+
+    rankListEl.innerHTML = all.map(function (p, i) {
+      var cls = (p.me ? 'me' : '') + (i === 0 ? ' top' : '');
+      return '<li class="' + cls.trim() + '"><span class="rk">' + (i + 1) + '</span>' +
+             '<span class="nm">' + p.name + '</span>' +
+             '<span class="sc">' + p.score + ' 分</span></li>';
+    }).join('');
+  }
+  renderRank();
+
+  function addScore(n) {
+    myScore += n;
+    renderRank();
+  }
+
+  /* ================= 砍价 ================= */
+  function bargain() {
+    if (busy) return;
+    busy = true;
+    if (bargainBtn) bargainBtn.disabled = true;
+    var owner = OWNERS[currentOwner];
+    addMsg('老板，便宜点呗，都是回头客！', 'user');
+    addTyping();
+
+    setTimeout(function () {
+      removeTyping();
+      var ok = Math.random() < owner.rate;
+      addMsg(pick(ok ? owner.win : owner.lose), 'bot');
+      addSticker(pick(OWNER_STICKERS[currentOwner]), 'bot');
+      if (ok) {
+        addScore(2);
+        addSys('砍价成功！积分 +2，当前 ' + myScore + ' 分');
+      } else {
+        addSys('砍价失败……' + owner.name + '没松口，再试试别家？');
+      }
+      busy = false;
+      if (bargainBtn) bargainBtn.disabled = false;
+    }, 700 + Math.random() * 500);
+  }
+  if (bargainBtn) bargainBtn.addEventListener('click', bargain);
+
+  /* ================= 会话切换 ================= */
+  function setOwner(i) {
+    ownerToken++;
+    var my = ownerToken;
+    currentOwner = i;
+    var owner = OWNERS[i];
+    convHist = []; /* 换店长就换一段对话 */
+
+    chatAvatar.textContent = owner.emoji;
+    chatName.textContent = owner.name;
+    chatRole.textContent = owner.role;
+
+    chatBody.innerHTML = '';
+    addMsg(owner.greet[0], 'bot');
+    if (owner.greet[1]) {
+      setTimeout(function () {
+        if (my === ownerToken) addMsg(owner.greet[1], 'bot');
+      }, 500);
+    }
+    setTimeout(function () {
+      if (my === ownerToken) addSticker(OWNER_STICKERS[i][0], 'bot');
+    }, 1100);
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    send(input.value);
+    input.focus();
+  });
+
+  document.getElementById('chips').addEventListener('click', function (e) {
+    var btn = e.target.closest('.chip');
+    if (btn) send(btn.textContent);
+  });
+
+  /* ============ 表情面板 & 图片/动图发送 ============ */
+  var emojiBtn = document.getElementById('emojiBtn');
+  var emojiPop = document.getElementById('emojiPop');
+  var emojiGrid = document.getElementById('emojiGrid');
+  var imgBtn = document.getElementById('imgBtn');
+  var imgFile = document.getElementById('imgFile');
+
+  EMOJIS.forEach(function (ch) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = ch;
+    b.addEventListener('click', function () { insertEmoji(ch); });
+    emojiGrid.appendChild(b);
+  });
+
+  function insertEmoji(ch) {
+    var s = input.value;
+    var st = input.selectionStart == null ? s.length : input.selectionStart;
+    var en = input.selectionEnd == null ? st : input.selectionEnd;
+    input.value = s.slice(0, st) + ch + s.slice(en);
+    var pos = st + ch.length;
+    input.focus();
+    try { input.setSelectionRange(pos, pos); } catch (e) {}
+  }
+
+  emojiBtn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    emojiPop.hidden = !emojiPop.hidden;
+  });
+  emojiPop.addEventListener('click', function (e) { e.stopPropagation(); });
+  document.addEventListener('click', function () { emojiPop.hidden = true; });
+
+  imgBtn.addEventListener('click', function () { imgFile.click(); });
+  imgFile.addEventListener('change', function () {
+    var f = imgFile.files && imgFile.files[0];
+    if (!f) return;
+    sendImageUrl(URL.createObjectURL(f));
+    imgFile.value = '';
+  });
+
+  /* 图片消息：用户发图（本地文件或图片/GIF 直链），店长看图回话 */
+  function sendImageUrl(src) {
+    if (busy) return;
+    busy = true;
+    if (bargainBtn) bargainBtn.disabled = true;
+    addImg(src, 'user');
+    input.value = '';
+    addTyping();
+
+    setTimeout(function () {
+      removeTyping();
+      addMsg(pick(replyFor('图', OWNERS[currentOwner])), 'bot');
+      maybeOwnerSticker(0.7);
+      busy = false;
+      if (bargainBtn) bargainBtn.disabled = false;
+    }, 800 + Math.random() * 500);
+  }
+
+  /* ================= DeepSeek 接入（可选） ================= */
+  var aiMode = false;
+  var dsKey = '';
+  var dsBase = 'https://api.deepseek.com';
+  var convHist = [];
+  try {
+    dsKey = localStorage.getItem('fe_ds_key') || '';
+    dsBase = localStorage.getItem('fe_ds_base') || 'https://api.deepseek.com';
+  } catch (e) {}
+
+  var modeLocal = document.getElementById('modeLocal');
+  var modeDS = document.getElementById('modeDS');
+  var dsGear = document.getElementById('dsGear');
+  var dsPop = document.getElementById('dsPop');
+  var dsKeyInput = document.getElementById('dsKeyInput');
+  var dsBaseInput = document.getElementById('dsBaseInput');
+  var dsSave = document.getElementById('dsSave');
+
+  function setMode(ai) {
+    aiMode = ai;
+    modeLocal.classList.toggle('active', !ai);
+    modeDS.classList.toggle('active', ai);
+    dsGear.hidden = !ai;
+    dsPop.hidden = true;
+    addSys(ai ? '已切换：DeepSeek 智能回复（需联网 · Key 仅存本机）' : '已切换：本地戏精话术');
+  }
+  modeLocal.addEventListener('click', function () { setMode(false); });
+  modeDS.addEventListener('click', function () {
+    setMode(true);
+    if (!dsKey) { dsPop.hidden = false; dsKeyInput.focus(); }
+  });
+
+  /* 折叠 / 展开回复来源栏：双击或点 ▾ 收起，点「回复来源 ▸」展开 */
+  var aiBar = document.getElementById('aiBar');
+  var aiFold = document.getElementById('aiFold');
+  var aiUnfold = document.getElementById('aiUnfold');
+
+  function setBarFolded(folded) {
+    aiBar.classList.toggle('folded', folded);
+    aiBar.querySelector('.ai-label').hidden = folded;
+    modeLocal.hidden = folded;
+    modeDS.hidden = folded;
+    aiFold.hidden = folded;
+    aiUnfold.hidden = !folded;
+    dsGear.hidden = folded || !aiMode;
+    if (folded) dsPop.hidden = true;
+  }
+  aiFold.addEventListener('click', function () { setBarFolded(true); });
+  aiUnfold.addEventListener('click', function (e) { e.stopPropagation(); setBarFolded(false); });
+  aiBar.addEventListener('dblclick', function (e) {
+    if (e.target === dsPop || dsPop.contains(e.target)) return;
+    e.preventDefault();
+    setBarFolded(!aiBar.classList.contains('folded'));
+  });
+  dsGear.addEventListener('click', function (e) {
+    e.stopPropagation();
+    dsPop.hidden = !dsPop.hidden;
+  });
+  dsPop.addEventListener('click', function (e) { e.stopPropagation(); });
+  dsKeyInput.value = dsKey;
+  dsBaseInput.value = dsBase;
+  dsSave.addEventListener('click', function () {
+    dsKey = dsKeyInput.value.trim();
+    dsBase = dsBaseInput.value.trim() || 'https://api.deepseek.com';
+    try {
+      localStorage.setItem('fe_ds_key', dsKey);
+      localStorage.setItem('fe_ds_base', dsBase);
+    } catch (e) {}
+    dsPop.hidden = true;
+    addSys('已保存接口设置（Key 仅存本机浏览器）');
+  });
+
+  function goChat(ownerIdx, text) {
+    document.getElementById('chat').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setTimeout(function () {
+      setOwner(ownerIdx);
+      if (text) {
+        setTimeout(function () { send(text); }, 900);
+      } else {
+        input.focus({ preventScroll: true });
+      }
+    }, 650);
+  }
+
+  document.getElementById('askWang').addEventListener('click', function () {
+    goChat(0, OWNERS[0].openLine);
+  });
+  document.getElementById('cardChat').addEventListener('click', function () {
+    goChat(0, OWNERS[0].openLine);
+  });
+
+  /* 每个摊位卡片加“找摊主聊聊”入口：点谁聊谁 */
+  Array.prototype.forEach.call(document.querySelectorAll('.stall'), function (card, i) {
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'stall-chat';
+    btn.textContent = '找' + OWNERS[i].name + '聊聊 · 顺手砍价 →';
+    btn.addEventListener('click', function () {
+      goChat(i, OWNERS[i].openLine);
+    });
+    card.appendChild(btn);
+  });
+
+  // —— 摊位特价轮换：每 30 秒随机一个摊位换“标红特价菜”，全场价格随行就市 ——
+  var FRESH_INTERVAL = 30; // 秒
+  var HOT_COUNT = 2;       // 每摊标红的菜数
+  var stallCards = Array.prototype.slice.call(document.querySelectorAll('.stall'));
+  var STALL_DISHES = [
+    [ {n:'小青菜',p:3.5,u:'斤'},{n:'西红柿',p:4.8,u:'斤'},{n:'螺丝椒',p:6.0,u:'斤'},{n:'嫩黄瓜',p:4.0,u:'斤'},{n:'冬瓜',p:2.2,u:'斤'} ],
+    [ {n:'活鲫鱼',p:12.0,u:'斤'},{n:'基围虾',p:38.0,u:'斤'},{n:'花蛤',p:7.5,u:'斤'},{n:'鲈鱼',p:22.0,u:'斤'},{n:'花蟹',p:35.0,u:'斤'} ],
+    [ {n:'嫩豆腐',p:2.0,u:'块'},{n:'豆干',p:2.5,u:'块'},{n:'豆腐皮',p:3.0,u:'份'},{n:'豆浆',p:2.0,u:'杯'},{n:'油豆腐',p:3.5,u:'份'} ],
+    [ {n:'五花',p:28.0,u:'斤'},{n:'里脊',p:30.0,u:'斤'},{n:'排骨',p:32.0,u:'斤'},{n:'猪蹄',p:26.0,u:'斤'},{n:'牛腩',p:36.0,u:'斤'} ],
+    [ {n:'砂糖橘',p:8.0,u:'斤'},{n:'草莓',p:15.0,u:'斤'},{n:'冬枣',p:12.0,u:'斤'},{n:'苹果',p:6.5,u:'斤'},{n:'香蕉',p:5.5,u:'斤'} ],
+    [ {n:'手擀面',p:5.0,u:'份'},{n:'馄饨皮',p:3.5,u:'份'},{n:'现包饺子',p:18.0,u:'斤'},{n:'烧麦',p:6.0,u:'份'},{n:'花卷',p:2.5,u:'个'} ]
+  ];
+
+  function chooseHots(prev) {
+    var idxs = [0, 1, 2, 3, 4];
+    for (var t = idxs.length - 1; t > 0; t--) {
+      var r = Math.floor(Math.random() * (t + 1));
+      var tmp = idxs[t]; idxs[t] = idxs[r]; idxs[r] = tmp;
+    }
+    var next = idxs.slice(0, HOT_COUNT).sort(function (a, b) { return a - b; });
+    if (prev && next.length === prev.length &&
+        next.every(function (v, k) { return v === prev[k]; })) {
+      return chooseHots(prev); /* 保证“标红的菜会变” */
+    }
+    return next;
+  }
+
+  function randPrice(base, prev) {
+    var v = Math.round(base * (0.85 + Math.random() * 0.35) * 10) / 10;
+    if (prev != null && v === prev) v = Math.round((v + 0.1) * 10) / 10;
+    return v;
+  }
+
+  /* 初始：每摊随机标红 2 样，价格随机 */
+  var hotIdx = stallCards.map(function () { return chooseHots(null); });
+  var hotPrice = stallCards.map(function (_, i) {
+    return hotIdx[i].map(function (h) { return randPrice(STALL_DISHES[i][h].p, null); });
+  });
+
+  function renderStall(i, pulse) {
+    var itemsEl = stallCards[i].querySelector('.items');
+    itemsEl.innerHTML = STALL_DISHES[i].map(function (d, k) {
+      var hi = hotIdx[i].indexOf(k);
+      if (hi > -1) {
+        return '<span class="hot' + (pulse ? ' pulse' : '') + '">' + d.n +
+               '<b>¥' + hotPrice[i][hi].toFixed(1) + '/' + d.u + '</b></span>';
+      }
+      return '<span>' + d.n + '</span>';
+    }).join('');
+  }
+  stallCards.forEach(function (_, i) { renderStall(i, false); });
+
+  var lastFreshIdx = -1;
+  var tickLeft = FRESH_INTERVAL;
+  var freshTimerEl = document.getElementById('freshTimer');
+
+  function updateTimerText() {
+    if (freshTimerEl) freshTimerEl.textContent = '下一轮上新 · ' + tickLeft + 's';
+  }
+  updateTimerText();
+
+  function refreshStall() {
+    var idx;
+    do { idx = Math.floor(Math.random() * stallCards.length); }
+    while (stallCards.length > 1 && idx === lastFreshIdx);
+    lastFreshIdx = idx;
+
+    /* 主角摊位：换标红的菜 + 换价 */
+    hotIdx[idx] = chooseHots(hotIdx[idx]);
+    hotPrice[idx] = hotIdx[idx].map(function (h) {
+      return randPrice(STALL_DISHES[idx][h].p, null);
+    });
+    renderStall(idx, false);
+
+    var card = stallCards[idx];
+    var old = card.querySelector('.fresh-badge');
+    if (old) old.remove();
+    var badge = document.createElement('div');
+    badge.className = 'fresh-badge';
+    badge.setAttribute('aria-hidden', 'true');
+    badge.textContent = '刚上新';
+    card.appendChild(badge);
+    setTimeout(function () { badge.remove(); }, 6000);
+
+    card.classList.remove('flash');
+    void card.offsetWidth; /* 重新触发动画 */
+    card.classList.add('flash');
+    setTimeout(function () { card.classList.remove('flash'); }, 1300);
+
+    /* 其余摊位：价格随行就市浮动 */
+    stallCards.forEach(function (_, i) {
+      if (i === idx) return;
+      hotPrice[i] = hotPrice[i].map(function (v, hi) {
+        return randPrice(STALL_DISHES[i][hotIdx[i][hi]].p, v);
+      });
+      renderStall(i, true);
+    });
+  }
+
+  setInterval(function () {
+    tickLeft--;
+    if (tickLeft <= 0) {
+      tickLeft = FRESH_INTERVAL;
+      refreshStall();
+    }
+    updateTimerText();
+  }, 1000);
+
+  // 滚动出现
+  var items = document.querySelectorAll('.reveal');
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) {
+          en.target.classList.add('in');
+          io.unobserve(en.target);
+        }
+      });
+    }, { threshold: 0.12 });
+    items.forEach(function (el) { io.observe(el); });
+  } else {
+    items.forEach(function (el) { el.classList.add('in'); });
+  }
+})();
+</script>
+</body>
+</html>
